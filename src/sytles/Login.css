@@ -1,0 +1,23 @@
+/* Force PrimeReact Password to full width */
+.p-password {
+  width: 130%;
+}
+
+.p-password-input {
+  width: 130%;
+}
+/* Make Password full width */
+.p-password {
+  width: 100%;
+  position: relative;
+}
+/* Push input padding so text doesn't overlap icon */
+/* Position eye icon to the RIGHT */
+.p-password-show-icon,
+.p-password-hide-icon {
+  position: absolute;
+  right: -4.75rem;
+  top: 70%;
+
+  cursor: pointer;
+}

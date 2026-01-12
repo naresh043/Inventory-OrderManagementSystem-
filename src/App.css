@@ -1,0 +1,131 @@
+/* #root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+} */
+
+@import "primeicons/primeicons.css";
+html, body {
+  height: 100%;
+  overflow-x: hidden; 
+  overflow-y: hidden;
+}
+
+
+  /* ===== ERP / KITAB STYLE TABLE ===== */
+
+.erp-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 14px;
+}
+
+/* Header */
+.erp-table .p-datatable-thead > tr > th {
+  background: #f8fafc;               /* light gray header */
+  color: #374151;                    /* gray-700 */
+  font-weight: 600;
+  padding: 14px 16px;
+  border-bottom: 1px solid #e5e7eb;  /* gray-200 */
+}
+
+/* Body rows */
+.erp-table .p-datatable-tbody > tr > td {
+  padding: 16px;
+  border-bottom: 1px solid #e5e7eb;
+  color: #4b5563;                    /* gray-600 */
+}
+
+/* Row hover */
+.erp-table .p-datatable-tbody > tr:hover {
+  background: #f1f5ff;               /* soft blue hover */
+}
+
+/* Remove last border */
+.erp-table .p-datatable-tbody > tr:last-child > td {
+  border-bottom: none;
+}
+
+/* Rounded table */
+.erp-table .p-datatable-wrapper {
+  border-radius: 10px;
+  overflow: hidden;
+}
+.erp-table .p-sortable-column-icon{
+  margin-left: 10px;
+}
+.overlay-loader {
+  position: absolute;     /* 👈 key */
+  inset: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(255, 255, 255, 0.5);
+  z-index: 10;
+}
+
+
+/* tabswiching css  */
+/* ONLY active tab indicator */
+
+/* Fix PrimeReact Dialog vertical centering */
+.account-sidebar-dialog {
+  position: fixed !important;
+  top: 60px !important;
+  right: 12px !important;
+  margin: 0 !important;
+
+  width: 400px !important;
+  border-radius: 0 !important;
+}
+
+.account-sidebar-dialog .p-dialog-content {
+  height: 100%;
+}
+/* logout btn issue fix  */
+/* .logout-btn {
+    flex: 0; 
+} */
+
+.logout-btn .p-button-label{
+ flex: 0 !important; 
+}
