@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import { DataTable } from "primereact/datatable";
@@ -7,6 +7,7 @@ import { Tag } from "primereact/tag";
 import { Button } from "primereact/button";
 import { Dialog } from "primereact/dialog";
 import { FilterMatchMode } from "primereact/api";
+import { Toast } from "primereact/toast";
 
 import UserDetails from "./UserDetails";
 import UserForm from "./UserForm";
@@ -32,8 +33,8 @@ export default function UserList({
 
   const [selectedUser, setSelectedUser] = useState(null);
   const [createUser] = usePostApiMutation();
+  const toast = useRef(null);
 
-  /* ================= GLOBAL FILTER ================= */
   const [filters, setFilters] = useState({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
   });
@@ -44,21 +45,18 @@ export default function UserList({
     });
   }, [globalSearch]);
 
-  /* ================= FETCH USERS ================= */
   useEffect(() => {
     if (!users.length) {
       dispatch(fetchUsers());
     }
   }, [dispatch, users.length]);
 
-  /* ================= CLEAR USER ON CREATE ================= */
   useEffect(() => {
     if (dialogMode === "create") {
       setSelectedUser(null);
     }
   }, [dialogMode]);
 
-  /* ================= STATUS TEMPLATE ================= */
   const statusTemplate = (row) => (
     <Tag
       value={row.isActive ? "Active" : "Inactive"}
@@ -67,7 +65,6 @@ export default function UserList({
     />
   );
 
-  /* ================= ACTIONS TEMPLATE ================= */
   const actionTemplate = (row) => (
     <div className="flex items-center gap-2">
       <Button
@@ -98,7 +95,6 @@ export default function UserList({
     </div>
   );
 
-  /* ================= SUBMIT ================= */
   const handleSubmit = async (data) => {
     try {
       if (dialogMode === "create") {
@@ -109,25 +105,48 @@ export default function UserList({
 
         if (res?.success) {
           dispatch(fetchUsers());
-          setDialogVisible(false);
+
+          toast.current.show({
+            severity: "success",
+            summary: "User Created",
+            detail: "New user created successfully",
+            life: 3000,
+          });
+
+          setTimeout(() => {
+            setDialogVisible(false);
+          }, 300);
         }
       }
 
       if (dialogMode === "edit") {
         dispatch(editUserRole({ id: data.id, role: data.role }));
-        setDialogVisible(false);
+
+        toast.current.show({
+          severity: "success",
+          summary: "User Updated",
+          detail: "User role updated successfully",
+          life: 3000,
+        });
+
+        setTimeout(() => {
+          setDialogVisible(false);
+        }, 300);
       }
     } catch (error) {
-      console.error("Submit failed", error);
+      toast.current.show({
+        severity: "error",
+        summary: "Action Failed",
+        detail: "Something went wrong",
+        life: 3000,
+      });
     }
   };
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-      {/* ================= GLOBAL LOADER ================= */}
       <Loader show={loading} />
 
-      {/* ================= TABLE ================= */}
       <DataTable
         value={users}
         dataKey="id"
@@ -150,7 +169,9 @@ export default function UserList({
         <Column header="Actions" body={actionTemplate} />
       </DataTable>
 
-      {/* ================= DIALOG ================= */}
+   
+      <Toast ref={toast} position="top-right" />
+
       <Dialog
         header={
           dialogMode === "view"
