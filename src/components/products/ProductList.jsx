@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
@@ -7,6 +7,7 @@ import { Button } from "primereact/button";
 import { Dialog } from "primereact/dialog";
 import { InputText } from "primereact/inputtext";
 import { FilterMatchMode } from "primereact/api";
+import { Toast } from "primereact/toast";
 
 import ProductDetails from "./ProductDetails";
 import ProductForm from "./ProductForm";
@@ -22,6 +23,7 @@ import useAuth from "../../hooks/useAuth";
 
 export default function ProductList() {
   const { user } = useAuth();
+  const toast = useRef(null);
 
   const [getProducts, { data, isFetching }] = useLazyGetApiQuery();
   const [deleteProduct, { isLoading: isDeleting }] = useDeleteApiMutation();
@@ -33,7 +35,7 @@ export default function ProductList() {
   const [dialogMode, setDialogMode] = useState("view");
   const [selectedProduct, setSelectedProduct] = useState(null);
 
-  /* 🔍 GLOBAL SEARCH */
+  
   const [searchValue, setSearchValue] = useState("");
   const [filters, setFilters] = useState({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
@@ -44,8 +46,7 @@ export default function ProductList() {
       global: { value: searchValue, matchMode: FilterMatchMode.CONTAINS },
     });
   }, [searchValue]);
-
-  /* FETCH PRODUCTS */
+ 
   useEffect(() => {
     getProducts({ url: "/products" });
   }, []);
@@ -104,18 +105,40 @@ export default function ProductList() {
         <Button
           icon="pi pi-trash"
           className="p-button-text p-button-sm text-red-600"
-          onClick={() =>
-            deleteProduct({ url: `/products/${row._id}` }).unwrap()
-          }
+          onClick={async () => {
+            try {
+              await deleteProduct({
+                url: `/products/${row._id}`,
+              }).unwrap();
+
+              toast.current.show({
+                severity: "success",
+                summary: "Product Deleted",
+                detail: "Product removed successfully",
+                life: 3000,
+              });
+
+              getProducts({ url: "/products" });
+            } catch (error) {
+              toast.current.show({
+                severity: "error",
+                summary: "Delete Failed",
+                detail: "Unable to delete product",
+                life: 3000,
+              });
+            }
+          }}
         />
       )}
     </div>
   );
 
   return (
-
     <>
-     <div className="flex justify-end px-1 py-1 border-b border-gray-200">
+      {/* ✅ Toast */}
+      <Toast ref={toast} position="top-right" />
+
+      <div className="flex justify-end px-1 py-1 border-b border-gray-200">
         <span className="p-input-icon-left">
           <i className="pi pi-search text-gray-400 ml-5" />
           <InputText
@@ -126,75 +149,93 @@ export default function ProductList() {
           />
         </span>
       </div>
-    <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-      <Loader show={loading} />
 
-      {/* 🔍 SEARCH – RIGHT SIDE ABOVE TABLE */}
-     
+      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+        <Loader show={loading} />
 
-      <DataTable
-        value={products}
-        dataKey="_id"
-        scrollable
-        scrollHeight="calc(100vh - 260px)"
-        size="small"
-        paginator
-        rows={5}
-        stripedRows
-        rowHover
-        filters={filters}
-        globalFilterFields={["sku", "name", "category"]}
-        emptyMessage="No products found"
-        className="erp-table text-sm [&_.p-datatable-tbody>tr>td]:py-2"
-      >
-        <Column field="sku" header="SKU" sortable />
-        <Column field="name" header="Name" />
-        <Column field="category" header="Category" />
-        <Column header="Quantity" body={quantityTemplate} />
-        <Column header="Actions" body={actionTemplate} />
-      </DataTable>
+        <DataTable
+          value={products}
+          dataKey="_id"
+          scrollable
+          scrollHeight="calc(100vh - 260px)"
+          size="small"
+          paginator
+          rows={5}
+          stripedRows
+          rowHover
+          filters={filters}
+          globalFilterFields={["sku", "name", "category"]}
+          emptyMessage="No products found"
+          className="erp-table text-sm [&_.p-datatable-tbody>tr>td]:py-2"
+        >
+          <Column field="sku" header="SKU" sortable />
+          <Column field="name" header="Name" />
+          <Column field="category" header="Category" />
+          <Column header="Quantity" body={quantityTemplate} />
+          <Column header="Actions" body={actionTemplate} />
+        </DataTable>
 
-      {/* DIALOG */}
-      <Dialog
-        header={dialogMode === "view" ? "Product Details" : "Edit Product"}
-        visible={dialogVisible}
-        style={{ width: "480px" }}
-        modal
-        draggable={false}
-        onHide={() => {
-          setDialogVisible(false);
-          setSelectedProduct(null);
-        }}
-      >
-        {selectedProduct && dialogMode === "view" && (
-          <ProductDetails product={selectedProduct} />
-        )}
+        {/* DIALOG */}
+        <Dialog
+          header={dialogMode === "view" ? "Product Details" : "Edit Product"}
+          visible={dialogVisible}
+          style={{ width: "480px" }}
+          modal
+          draggable={false}
+          onHide={() => {
+            setDialogVisible(false);
+            setSelectedProduct(null);
+          }}
+        >
+          {selectedProduct && dialogMode === "view" && (
+            <ProductDetails product={selectedProduct} />
+          )}
 
-        {selectedProduct && dialogMode === "edit" && canEdit && (
-          <ProductForm
-            initialData={{
-              name: selectedProduct.name,
-              price: selectedProduct.price,
-              stock: selectedProduct.stockQuantity,
-              category: selectedProduct.category,
-            }}
-            onSubmit={async (formData) => {
-              await updateProduct({
-                url: `/products/${selectedProduct._id}`,
-                data: {
-                  name: formData.name,
-                  price: Number(formData.price),
-                  stockQuantity: Number(formData.stock),
-                  category: formData.category,
-                },
-              }).unwrap();
+          {selectedProduct && dialogMode === "edit" && canEdit && (
+            <ProductForm
+              initialData={{
+                name: selectedProduct.name,
+                price: selectedProduct.price,
+                stock: selectedProduct.stockQuantity,
+                category: selectedProduct.category,
+              }}
+              onSubmit={async (formData) => {
+                try {
+                  await updateProduct({
+                    url: `/products/${selectedProduct._id}`,
+                    data: {
+                      name: formData.name,
+                      price: Number(formData.price),
+                      stockQuantity: Number(formData.stock),
+                      category: formData.category,
+                    },
+                  }).unwrap();
 
-              setDialogVisible(false);
-              getProducts({ url: "/products" });
-            }}
-          />
-        )}
-      </Dialog>
-    </div></>
+                  toast.current.show({
+                    severity: "success",
+                    summary: "Product Updated",
+                    detail: "Product updated successfully",
+                    life: 3000,
+                  });
+
+                  getProducts({ url: "/products" });
+
+                  setTimeout(() => {
+                    setDialogVisible(false);
+                  }, 500);
+                } catch (error) {
+                  toast.current.show({
+                    severity: "error",
+                    summary: "Update Failed",
+                    detail: "Unable to update product",
+                    life: 3000,
+                  });
+                }
+              }}
+            />
+          )}
+        </Dialog>
+      </div>
+    </>
   );
 }

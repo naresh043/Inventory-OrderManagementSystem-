@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Button } from "primereact/button";
 import { Dialog } from "primereact/dialog";
 import { InputText } from "primereact/inputtext";
@@ -6,6 +6,7 @@ import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { Tag } from "primereact/tag";
 import { FilterMatchMode } from "primereact/api";
+import { Toast } from "primereact/toast";
 
 import {
   useLazyGetApiQuery,
@@ -17,11 +18,10 @@ import useAuth from "../../hooks/useAuth";
 
 function OrdersPage() {
   const { user } = useAuth();
+  const toast = useRef(null);
 
-  const [getOrders, { data: ordersList, isLoading }] =
-    useLazyGetApiQuery();
-  const [createOrder, { isLoading: creating }] =
-    usePostApiMutation();
+  const [getOrders, { data: ordersList, isLoading }] = useLazyGetApiQuery();
+  const [createOrder, { isLoading: creating }] = usePostApiMutation();
 
   const [showDialog, setShowDialog] = useState(false);
 
@@ -54,6 +54,9 @@ function OrdersPage() {
 
   return (
     <>
+      {/* ✅ Toast */}
+      <Toast ref={toast} position="top-right" />
+
       <Loader show={isLoading || creating} />
 
       <div className="h-screen bg-white flex flex-col rounded-md">
@@ -72,12 +75,15 @@ function OrdersPage() {
 
         <div className="flex-1 overflow-auto p-6">
           <div className="flex justify-end mb-4">
-            <InputText
-              value={globalFilterValue}
-              onChange={onGlobalFilterChange}
-              placeholder="Search orders..."
-              className="p-inputtext-sm w-64"
-            />
+            <span className="p-input-icon-left">
+              <i className="pi pi-search text-gray-400 ml-4" />
+              <InputText
+                value={globalFilterValue}
+                onChange={onGlobalFilterChange}
+                placeholder="Search orders..."
+                className="p-inputtext-sm w-64 pl-10"
+              />
+            </span>
           </div>
 
           <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
@@ -125,13 +131,32 @@ function OrdersPage() {
           >
             <OrderForm
               onSubmit={async (data) => {
-                await createOrder({
-                  url: "/orders",
-                  body: data,
-                }).unwrap();
+                try {
+                  await createOrder({
+                    url: "/orders",
+                    body: data,
+                  }).unwrap();
 
-                setShowDialog(false);
-                getOrders({ url: "/orders" });
+                  toast.current.show({
+                    severity: "success",
+                    summary: "Order Created",
+                    detail: "New order added successfully",
+                    life: 3000,
+                  });
+
+                  getOrders({ url: "/orders" });
+
+                  setTimeout(() => {
+                    setShowDialog(false);
+                  }, 300);
+                } catch (error) {
+                  toast.current.show({
+                    severity: "error",
+                    summary: "Order Failed",
+                    detail: "Unable to create order",
+                    life: 3000,
+                  });
+                }
               }}
             />
           </Dialog>
